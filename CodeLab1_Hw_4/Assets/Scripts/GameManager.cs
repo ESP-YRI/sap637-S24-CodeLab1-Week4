@@ -8,6 +8,7 @@ using File = System.IO.File;
 
 public class GameManager : MonoBehaviour
 {
+    
     public static GameManager Instance;
     public TextMeshProUGUI screenText;
 
@@ -77,18 +78,14 @@ public class GameManager : MonoBehaviour
             if (highScores == null)
             {
                 highScores = new List<int>();
-
+                
+                highScores.Add(0);
+                
                 //inserts a 3 at the 0th slot of the list: this pushes the 0 from above back by one (if it's active)
                 highScores.Insert(0, 3);
                 highScores.Insert(1, 2);
                 highScores.Insert(2, 1);
             }
-
-            /*if (File.Exists(DATA_FULL_HS_FILE_PATH))
-            {
-                string fileContent = File.ReadAllText(DATA_FULL_HS_FILE_PATH);
-                highscore = Int32.Parse(fileContent);
-            }*/
             
             highScoresString = File.ReadAllText(DATA_FULL_HS_FILE_PATH);
 
@@ -110,9 +107,10 @@ public class GameManager : MonoBehaviour
         
         set
         {
-            /*
-            highscore = value;
-            string fileContent = "" + highscore;*/
+            
+            //highscore = value;
+            //string fileContent = "" + highscore;
+            
             if (!Directory.Exists(Application.dataPath + DATA_DIR))
             {
                 Directory.CreateDirectory(Application.dataPath + DATA_DIR);
@@ -123,7 +121,7 @@ public class GameManager : MonoBehaviour
                 Directory.CreateDirectory(Application.dataPath + DATA_DIR);
             }
 
-            /*File.WriteAllText(DATA_FULL_HS_FILE_PATH, fileContent);*/
+            //File.WriteAllText(DATA_FULL_HS_FILE_PATH, fileContent);
         }
     }
     
