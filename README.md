@@ -1,5 +1,3 @@
-# FILL IN INFO ABOUT YOUR GAME HERE. 
+# A game about eating apples
 
-DO NOT LEAVE IT LIKE THIS!!!
-
-Please? Please, give me content. I'm begging you. It's not that hard. Thanks.
+Meant to save a list of high scores. There are currently 2 game manager scripts in it: GameManageScriptV2 has code in it to save one high score to a file. I implemented it solely for the function of actually getting a hs.txt file to generate, which the game manager which saves a list of high scores could not do.
