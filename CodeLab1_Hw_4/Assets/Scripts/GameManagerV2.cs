@@ -67,7 +67,7 @@ public class GameManagerV2 : MonoBehaviour
     }
 
     const string DATA_DIR = "/Data/";
-    const string DATA_HS_FILE = "hs.txt";
+    const string DATA_HS_FILE = "highScores.txt";
     string DATA_FULL_HS_FILE_PATH;
     
     private void Awake()

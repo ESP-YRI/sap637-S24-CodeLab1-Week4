@@ -1,10 +1,11 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using TMPro;
 using UnityEngine;
-using Directory = System.IO.Directory;
-using File = System.IO.File;
+using UnityEngine.SceneManagement;
+//using File = System.IO.File;
 
 public class GameManager : MonoBehaviour
 {
@@ -12,12 +13,11 @@ public class GameManager : MonoBehaviour
     public static GameManager Instance;
     public TextMeshProUGUI screenText;
 
-    private int score = 0;
-    List<int> highscores;
+    public int score = 0;
     
-    const string DATA_DIR = "/Data/";
-    const string DATA_HS_FILE = "hs.txt";
-    string DATA_FULL_HS_FILE_PATH;
+    const string DATA_DIR = "/DATA/";
+    const string DATA_HS_FILE = "highScores.txt";
+    string FULL_FILE_PATH;
 
     public int Score
     {
@@ -27,44 +27,10 @@ public class GameManager : MonoBehaviour
         }
         set
         {
-            if (IsHighScore(score))
-            {
-                //-1 is not a slot you can have in a list- that's why we default this int to that
-                int highScoreSlot = -1;
+            score = value;
 
-                for (int i = 0; i < Highscores.Count; i++)
-                {
-                    
-                    if (score > highScores[i])
-                    {
-                        highScoreSlot = i;
-                        break; //leaves the for loop without continuing to iterate or returning anything
-                    }
-                    
-                }
-                //inserts the new score, which IS a high score (because we are still in the if(isHighScore) statement
-                //at the correct point in the highScores list, highScoreSlot!
-                highScores.Insert(highScoreSlot, score);
-
-                //sets the list's length: starts at the beginning and gives you 5 slots total
-                highScores = highScores.GetRange(0, 5);
-                
-                string scoreBoardText = "";
-                
-                //goes through everything in the highScores list -> doesn't need a count like a regular for loop!
-                //you can't know which spot you're in at a given time, however -> needs a for loop
-                foreach (var highScore in highScores)
-                {
-                    scoreBoardText += highScore + "\n";
-                }
-
-                highScoresString = scoreBoardText;
-                //saves to file
-                //File.WriteAllText(FILE_FULL_PATH, highScoresString);
-                File.WriteAllText(DATA_FULL_HS_FILE_PATH, highScoresString);
-            
-            }
         }
+        
     }
     
     string highScoresString = "";
@@ -74,55 +40,51 @@ public class GameManager : MonoBehaviour
     {
         get
         {
-            //if there arent any values in the highScores list, generate a new list to set it to
-            if (highScores == null)
+            //if there arent any values in the highScores list, and the file we store those high scores in exists
+            if (highScores == null && File.Exists(FULL_FILE_PATH))
             {
+                Debug.Log("File is here!");
+                
+                //makes a new list of high scores
                 highScores = new List<int>();
+
+                //sets the highScoresString to read everything in the highScores.txt file
+                highScoresString = File.ReadAllText(FULL_FILE_PATH);
                 
-                highScores.Add(0);
+                //cuts off white space at the top and bottom of a string
+                //so, tabs, \n's, etc
+                highScoresString = highScoresString.Trim();
                 
-                //inserts a 3 at the 0th slot of the list: this pushes the 0 from above back by one (if it's active)
-                highScores.Insert(0, 3);
-                highScores.Insert(1, 2);
-                highScores.Insert(2, 1);
+                //make an array of strings by splitting the highScoresString into multiple strings, using
+                //line breaks to determine the point of splittin
+                string[] highScoreArray = highScoresString.Split("\n");
+                
+                //iterates through the array of high scores (which were read from the txt file)
+                for (int i = 0; i < highScoreArray.Length; i++)
+                {
+                    //turns each string highscore into an integer
+                    int currentScore = Int32.Parse(highScoreArray[i]);
+                    
+                    //adds it to the highScores list 
+                    highScores.Add(currentScore);
+                }
             }
             
-            highScoresString = File.ReadAllText(DATA_FULL_HS_FILE_PATH);
-
-            //cuts off white space at the top and bottom of a string
-            //so, tabs, \n's, etc
-            highScoresString = highScoresString.Trim();
-
-            string[] highScoreArray = highScoresString.Split("\n");
-
-            for (int i = 0; i < highScoreArray.Length; i++)
+            //if there are no high scores AND no file to read them from, 
+            else if(highScores == null)
             {
-                int currentScore = Int32.Parse(highScoreArray[i]);
-                highScores.Add(currentScore);
+                Debug.Log("File NOT here");
+                //generates a default list of high scores 3, 2, 1, and 0
+                highScores = new List<int>();
+                highScores.Add(3);
+                highScores.Add(2);
+                highScores.Add(1);
+                highScores.Add(0);
             }
             
             return highScores;
         }
-
         
-        set
-        {
-            
-            //highscore = value;
-            //string fileContent = "" + highscore;
-            
-            if (!Directory.Exists(Application.dataPath + DATA_DIR))
-            {
-                Directory.CreateDirectory(Application.dataPath + DATA_DIR);
-            }
-
-            if (!File.Exists(DATA_FULL_HS_FILE_PATH))
-            {
-                Directory.CreateDirectory(Application.dataPath + DATA_DIR);
-            }
-
-            //File.WriteAllText(DATA_FULL_HS_FILE_PATH, fileContent);
-        }
     }
     
     private void Awake()
@@ -140,12 +102,39 @@ public class GameManager : MonoBehaviour
 
     private void Start()
     {
-        DATA_FULL_HS_FILE_PATH = Application.dataPath + DATA_DIR + DATA_HS_FILE;
+        FULL_FILE_PATH = Application.dataPath + DATA_DIR + DATA_HS_FILE;
+        Debug.Log("File Path = " + FULL_FILE_PATH);
     }
 
+    private float timer = 0;
+    public int maxTime = 5;
+    private bool inGame = true;
+    
     private void Update()
     {
-        screenText.text = "Apples Eaten: " + Score;
+        //if the game is being played, displays the current score and remaining time
+        if (inGame)
+        {
+            screenText.text = "Time Left: " + (maxTime- (int)timer) + "\nApples Eaten: " + score;
+        }
+        //if the game is over, prints the final score and all the high scores
+        else
+        {
+            screenText.text = "All Appled Out!\n" +"\nFinal Total: " + score + "\n" + "\nRecords:\n" + highScoresString;
+        }
+
+        //increments timer with the time elapsed between frames
+        timer += Time.deltaTime;
+
+        //once the timer runs out, the game ends, goes to the end screen, and checks for a high score
+        if (timer >= maxTime && inGame)
+        {
+            inGame = false;
+            SceneManager.LoadScene("End");
+            Debug.Log("Setting high score...");
+            SetHighScore();
+        }
+        
     }
 
     bool IsHighScore(int score)
@@ -160,4 +149,46 @@ public class GameManager : MonoBehaviour
 
         return false;
     }
+
+    void SetHighScore()
+    {
+        //if the score the player got IS a high score:
+        if (IsHighScore(score))
+        {
+            int highScoreSlot = -1;
+
+            //goes through the entire HighScores list to figure out which slot to put the new highscore in
+            for (int i = 0; i < Highscores.Count; i++)
+            {
+                if (score > highScores[i])
+                {
+                    highScoreSlot = i;
+                    break;
+                }
+            }
+                
+                //puts the new high score in the appropriate place in the list
+                highScores.Insert(highScoreSlot, score);
+
+                //limits the number of highscores to the top 5
+                highScores = highScores.GetRange(0, 5);
+                
+                string scoreboardText = "";
+
+                //adds every high score in the highScores to scoreboardText, separated by a \n
+                foreach (var highScore in highScores)
+                {
+                    scoreboardText += highScore + "\n";
+                }
+
+                //sets highScoresString to scoreboardText
+                highScoresString = scoreboardText;
+                
+                //writes the list of highscores to the highScores.txt file
+                File.WriteAllText(FULL_FILE_PATH, highScoresString);
+                Debug.Log(highScoresString);
+        }
+    }
+    
 }
+
